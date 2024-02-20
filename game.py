@@ -41,6 +41,22 @@ game_over = False
 spawn_new = True
 init_count = 0
 direction = ""
+score = 0
+
+file = open("high_score", "r")
+init_high_score = int(file.readline())
+file.close()
+
+high_score = init_high_score
+
+
+# draw game over and restart the game
+def draw_over():
+    pygame.draw.rect(screen, "black", [50, 50, 300, 100], 0, 10)
+    game_over_text1 = font.render("Game Over!", True, "white")
+    game_over_text2 = font.render("Press Enter to Restart", True, "white")
+    screen.blit(game_over_text1, (130, 65))
+    screen.blit(game_over_text2, (70, 105))
 
 
 # take your turn based on direction
@@ -58,6 +74,7 @@ def take_turn(direc, board):
 
 
 def go_up(direc, board, merged):
+    global score
     # going thru every square on the board
     for i in range(4):
         for j in range(4):
@@ -76,11 +93,13 @@ def go_up(direc, board, merged):
                     and not merged[i - shift][j]
                 ):
                     board[i - shift - 1][j] *= 2
+                    score += board[i - shift - 1][j]
                     board[i - shift][j] = 0
                     merged[i - shift - 1][j] = True
 
 
 def go_down(direc, board, merged):
+    global score
     for i in range(3):
         for j in range(4):
             shift = 0
@@ -97,11 +116,13 @@ def go_down(direc, board, merged):
                     and not merged[2 - i + shift][j]
                 ):
                     board[3 - i + shift][j] *= 2
+                    score += board[3 - i + shift][j]
                     board[2 - i + shift][j] = 0
                     merged[3 - i + shift][j] = True
 
 
 def go_left(direc, board, merged):
+    global score
     for i in range(4):
         for j in range(4):
             shift = 0
@@ -117,11 +138,13 @@ def go_left(direc, board, merged):
                 and not merged[i][j - shift]
             ):
                 board[i][j - shift - 1] *= 2
+                score += board[i][j - shift - 1]
                 board[i][j - shift] = 0
                 merged[i][j - shift - 1] = True
 
 
 def go_right(direc, board, merged):
+    global score
     for i in range(4):
         for j in range(4):
             shift = 0
@@ -138,6 +161,7 @@ def go_right(direc, board, merged):
                     and not merged[i][3 - j + shift]
                 ):
                     board[i][4 - j + shift] *= 2
+                    score += board[i][4 - j + shift]
                     board[i][3 - j + shift] = 0
                     merged[i][4 - j + shift] = True
 
@@ -166,6 +190,10 @@ def new_pieces(board):
 # draw background for the board
 def draw_board():
     pygame.draw.rect(screen, colors["bg"], [0, 0, 400, 400], 0, 10)
+    score_text = font.render(f"Score: {score}", True, "black")
+    high_score_text = font.render(f"High Score: {high_score}", True, "black")
+    screen.blit(score_text, (10, 410))
+    screen.blit(high_score_text, (10, 450))
     pass
 
 
@@ -221,6 +249,13 @@ while run:
         board_values = take_turn(direction, board_values)
         direction = ""
         spawn_new = True
+    if game_over:
+        draw_over()
+        if high_score > init_high_score:
+            file = open("high_score", "w")
+            file.write(f"{high_score}")
+            file.close()
+            init_high_score = high_score
 
     for event in pygame.event.get():
         # quit = when you pres red x
@@ -235,7 +270,18 @@ while run:
                 direction = "LEFT"
             elif event.key == pygame.K_RIGHT:
                 direction = "RIGHT"
-            # else:
+
+            if game_over:
+                if event.key == pygame.K_RETURN:
+                    board_values = [[0 for _ in range(4)] for _ in range(4)]
+                    spawn_new = True
+                    init_count = 0
+                    score = 0
+                    direction = ""
+                    game_over = False
+
+    if score > high_score:
+        high_score = score
 
     pygame.display.flip()
 # exiting while loop to exit program
